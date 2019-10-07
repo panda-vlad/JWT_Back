@@ -1,53 +1,24 @@
-const errors = require('restify-errors');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken')
+const User = require('../service/User');
 
-const User = require('../models/User');
-const auth = require('../auth.js');
-const config = require('../config.js')
 
-const userRegister = (req, res, next) => {
+const userRegister = async (req, res, next) => {
   const { email, password } = req.body;
-
-  const user = new User({
-    email, password
-  });
-
-  bcrypt.genSalt(10, (err, salt) => {
-    bcrypt.hash(user.password, salt, async (err, hash) => {
-      // Hash password
-      user.password = hash;
-      //Save user
-      try {
-        const newUser = await user.save();
-        res.send(201);
-      } catch (err) {
-        return next(new errors.InternalError(err.message));
-      }
-    });
-  });
+  const newUser = new User(email, password);
+  const status = await newUser.userRegister();
+  console.log(status)
+  res.send(status.statusCode)
+  if(status.error) next(status.error)
+  next();
 };
 
 const userAuth = async (req, res, next) => {
-  const { email, password} = req.body;
-  try {
-    // Auth User
-    const user = await auth.authenticate(email, password);
-    console.log(user)
-    // Create JWT
-    const token = jwt.sign(user.toJSON(), config.JWT_SECRET, {
-      expiresIn: '15m'
-    });
+  const { email, password } = req.body;
+  const userAuth = new User( email, password)
 
-    const { iat, exp } = jwt.decode(token);
-
-    res.send({ iat, exp, token });
-
-    next();
-  } catch(e) {
-    // USer unauth
-    return next(new errors.UnauthorizedError(e))
-  }
+  const status = await userAuth.userAuth();
+  if(!status.error) res.send(status);
+  else next(status.error);
+  next();
 };
 
 module.exports = {

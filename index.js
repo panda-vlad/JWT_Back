@@ -3,12 +3,22 @@ const mongoose = require('mongoose');
 
 const config = require('./config');
 const rjwt = require('restify-jwt-community');
+const corsMiddleware = require('restify-cors-middleware');
 
 const server = restify.createServer();
 
+//Cors
+const cors = corsMiddleware({
+  preflightMaxAge: 5, //Optional
+  origins: ['*'],
+  allowHeaders: ['API-Token'],
+  exposeHeaders: ['API-Token-Expiry']
+})
+ 
+server.pre(cors.preflight)
+server.use(cors.actual)
 
 // Middleware
-
 server.use(restify.plugins.bodyParser());
 
 // Protect Routes

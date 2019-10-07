@@ -8,7 +8,7 @@ exports.authenticate = (email, pass) => {
              const user = await User.findOne({email})
              // Match password
              bcrypt.compare(pass, user.password, (err, ismatch)=> {
-                 if (err) throw err;
+                 if (err) reject(err);
                  if(ismatch){
                      resolve(user);
                  } else {
